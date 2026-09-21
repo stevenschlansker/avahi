@@ -301,6 +301,13 @@ fi
 run ./avahi-core/avahi-test
 run ./avahi-core/querier-test
 
+# Throwaway: show the bind-before-options race on this kernel. "late" is
+# avahi's order with the window widened; "early" is the fix. The daemon
+# started above supplies the mDNS traffic. Only "early" may fail the job.
+"${CC:-cc}" -o /tmp/cmsg-race .github/workflows/cmsg-race.c
+/tmp/cmsg-race late || echo "late: datagrams without control messages, as predicted (exit $?)"
+/tmp/cmsg-race early; r=$?; [ "$r" -eq 0 ] || [ "$r" -eq 3 ] || exit 1
+
 for test_case in self_loop retransmit_cname one_normal one_loop two_normal two_loop two_loop_inner two_loop_inner2 three_normal three_loop diamond both_directions cname_answer_diamond cname_answer; do
     run ./avahi-core/cname-test $test_case
 done
